@@ -1473,6 +1473,107 @@ class Recognizer(AudioSource):
 
         return finalRecognition
 
+    def recognize_mlx_whisper(self, audio_data, model="mlx-community/whisper-tiny", show_dict=False, load_options=None, language=None, translate=False, **transcribe_options):
+        """
+        Performs speech recognition on ``audio_data`` (an ``AudioData`` instance), using MLX-Whisper.
+
+        The recognition language is determined by ``language``, an uncapitalized full language name like "english" or "chinese". See the full language list at https://github.com/ml-explore/mlx-examples/blob/main/whisper/mlx_whisper/tokenizer.py
+
+        model can be any of tiny, base, small, medium, large, tiny.en, base.en, small.en, medium.en. See https://github.com/ml-explore/mlx-examples/blob/main/whisper/README.md for more details.
+
+        If show_dict is true, returns the full dict response from Whisper, including the detected language. Otherwise returns only the transcription.
+
+        Other values are passed directly to whisper. See https://github.com/ml-explore/mlx-examples/blob/1727959a27f2fb7b459387084b59f066296757a5/whisper/mlx_whisper/transcribe.py#L62 for all options.add()
+
+        MLX-Whisper docstring:
+            Transcribe an audio file using Whisper
+
+            Parameters
+            ----------
+            audio: Union[str, np.ndarray, mx.array]
+                The path to the audio file to open, or the audio waveform
+
+            path_or_hf_repo: str
+                The localpath to the Whisper model or HF Hub repo with the MLX converted weights.
+
+            verbose: bool
+                Whether to display the text being decoded to the console. If True, displays all the details,
+                If False, displays minimal details. If None, does not display anything
+
+            temperature: Union[float, Tuple[float, ...]]
+                Temperature for sampling. It can be a tuple of temperatures, which will be successively used
+                upon failures according to either `compression_ratio_threshold` or `logprob_threshold`.
+
+            compression_ratio_threshold: float
+                If the gzip compression ratio is above this value, treat as failed
+
+            logprob_threshold: float
+                If the average log probability over sampled tokens is below this value, treat as failed
+
+            no_speech_threshold: float
+                If the no_speech probability is higher than this value AND the average log probability
+                over sampled tokens is below `logprob_threshold`, consider the segment as silent
+
+            condition_on_previous_text: bool
+                if True, the previous output of the model is provided as a prompt for the next window;
+                disabling may make the text inconsistent across windows, but the model becomes less prone to
+                getting stuck in a failure loop, such as repetition looping or timestamps going out of sync.
+
+            word_timestamps: bool
+                Extract word-level timestamps using the cross-attention pattern and dynamic time warping,
+                and include the timestamps for each word in each segment.
+
+            prepend_punctuations: str
+                If word_timestamps is True, merge these punctuation symbols with the next word
+
+            append_punctuations: str
+                If word_timestamps is True, merge these punctuation symbols with the previous word
+
+            initial_prompt: Optional[str]
+                Optional text to provide as a prompt for the first window. This can be used to provide, or
+                "prompt-engineer" a context for transcription, e.g. custom vocabularies or proper nouns
+                to make it more likely to predict those word correctly.
+
+            decode_options: dict
+                Keyword arguments to construct `DecodingOptions` instances
+
+            clip_timestamps: Union[str, List[float]]
+                Comma-separated list start,end,start,end,... timestamps (in seconds) of clips to process.
+                The last end timestamp defaults to the end of the file.
+
+            hallucination_silence_threshold: Optional[float]
+                When word_timestamps is True, skip silent periods longer than this threshold (in seconds)
+                when a possible hallucination is detected
+
+            Returns
+            -------
+            A dictionary containing the resulting text ("text") and segment-level details ("segments"), and
+            the spoken language ("language"), which is detected when `decode_options["language"]` is None.
+        """
+
+        assert isinstance(audio_data, AudioData), "Data must be audio data"
+        import numpy as np
+        import soundfile as sf
+        import mlx_whisper
+
+        # 16 kHz https://github.com/ml-explore/mlx-examples/blob/1727959a27f2fb7b459387084b59f066296757a5/whisper/mlx_whisper/audio.py#L142-L143
+        wav_bytes = audio_data.get_wav_data(convert_rate=16000)
+        wav_stream = io.BytesIO(wav_bytes)
+        audio_array, sampling_rate = sf.read(wav_stream)
+        audio_array = audio_array.astype(np.float32)
+
+        result = mlx_whisper.transcribe(
+            audio_array,
+            path_or_hf_repo=model,
+            language=language,
+            task="translate" if translate else None,
+            **transcribe_options
+        )
+
+        if show_dict:
+            return result
+        else:
+            return result["text"]
 
 class PortableNamedTemporaryFile(object):
     """Limited replacement for ``tempfile.NamedTemporaryFile``, except unlike ``tempfile.NamedTemporaryFile``, the file can be opened again while it's currently open, even on Windows."""
