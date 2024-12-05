@@ -40,6 +40,7 @@ Speech recognition engine/API support:
 * `Vosk API <https://github.com/alphacep/vosk-api/>`__ (works offline)
 * `OpenAI whisper <https://github.com/openai/whisper>`__ (works offline)
 * `Whisper API <https://platform.openai.com/docs/guides/speech-to-text>`__
+* `MLX-Whisper <https://github.com/ml-explore/mlx-examples/blob/main/whisper/README.md>`__
 
 **Quickstart:** ``pip install SpeechRecognition``. See the "Installing" section for more details.
 
@@ -170,6 +171,12 @@ Whisper (for Whisper users)
 Whisper is **required if and only if you want to use whisper** (``recognizer_instance.recognize_whisper``).
 
 You can install it with ``python3 -m pip install SpeechRecognition[whisper-local]``.
+
+MLX-Whisper (for Mac mlx users)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+MLX-Whisper is **required if and only if you want to use mlx-whisper** (``recognizer_instance.recognize_mlx_whisper``).
+
+You can install it with ``python3 -m pip install SpeechRecognition[mlx-whisper-local]``.
 
 Whisper API (for Whisper API users) 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
